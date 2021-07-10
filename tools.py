@@ -1,6 +1,7 @@
 import os
 import requests
 import numpy as np
+from typing import List
 
 
 def load_raw_data():
@@ -60,3 +61,15 @@ def load_raw_data():
         alldat = np.hstack((alldat, np.load('steinmetz_part%d.npz' % j, allow_pickle=True)['dat']))
 
     return alldat
+
+
+def select_by_areas(dat, selected_regions: List[str] = ['VISp']):
+    '''Find indices of neurons belonging to the specified areas in the dataset provided from a single experiment.
+
+    Args:
+        dat (dict): data dictionary from a single experiment. For example dat = alldat[11] in the example notebook.
+        selected_regions (list of str): list of region names to include. For example ['VISp']
+
+    Returns:
+        indices (1D array): array of indices from neurons belonging to specified regions.'''
+    return np.where(np.isin(dat['brain_area'], selected_regions))[0]
