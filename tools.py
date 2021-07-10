@@ -86,23 +86,29 @@ def select_by_contrast(dat, contrast_pair: tuple = (1, 0)):
         indices (1D array): array of indices from trials.'''
     return np.where((dat['contrast_left'] == contrast_pair[0])*(dat['contrast_right'] == contrast_pair[1]))[0]
 
-def select_by_response(dat, response_type: str = 'to_left'):
-    '''Find indices of trials with the specified response in the dataset provided from a single experiment.
+def select_trials(dat,  contrast_pair: tuple = (0, 1), response_type: str = 'to_left'):
+    '''Find indices of trials with the specified response and contrast levels in the dataset provided from a single experiment.
 
     Args:
         dat (dict): data dictionary from a single experiment. For example dat = alldat[11] in the example notebook.
+        contrast_pair (tuple): tuple with the contrast level of Left and Right stimulus. For example (1,0) represents stimulus on left with contrast 1 (max), and stimulus on right with contrast 0 (not shown).
         response_type (str): str specifying direction of movement. "to_left", "to_right", or "nogo". For example, responses "to_left" are correct when stimulus with higher contrast is on the right side. "nogo" is when mouse did not move the wheel enough.
 
     Returns:
         indices (1D array): array of indices from trials.'''
 
+    contrast_indices = select_by_contrast(dat, contrast_pair)
+
     if response_type == 'to_left':
-        indices = np.where(dat['response'] < 0)[0]
+        response_indices = np.where(dat['response'] < 0)[0]
     elif response_type == 'to_right':
-        indices = np.where(dat['response'] > 0)[0]
+        response_indices = np.where(dat['response'] > 0)[0]
     elif response_type == 'nogo':
-        indices = np.where(dat['response'] == 0)[0]
+        response_indices = np.where(dat['response'] == 0)[0]
     else:
         raise Warning('wrong response_type input, choose: to_left, to_right or nogo')
+
+    # find intersection of both lists using sets and transforming back to a list
+    indices = list(set.intersection(set(contrast_indices), set(response_indices)))
 
     return indices
