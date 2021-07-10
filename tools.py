@@ -86,6 +86,29 @@ def select_by_contrast(dat, contrast_pair: tuple = (1, 0)):
         indices (1D array): array of indices from trials.'''
     return np.where((dat['contrast_left'] == contrast_pair[0])*(dat['contrast_right'] == contrast_pair[1]))[0]
 
+
+def select_by_response(dat, response_type: str = 'to_left'):
+    '''Find indices of trials with the specified response in the dataset provided from a single experiment.
+
+    Args:
+        dat (dict): data dictionary from a single experiment. For example dat = alldat[11] in the example notebook.
+        response_type (str): str specifying direction of movement. "to_left", "to_right", or "nogo". For example, responses "to_left" are correct when stimulus with higher contrast is on the right side. "nogo" is when mouse did not move the wheel enough.
+
+    Returns:
+        indices (1D array): array of indices from trials.'''
+
+    if response_type == 'to_left':
+        indices = np.where(dat['response'] < 0)[0]
+    elif response_type == 'to_right':
+        indices = np.where(dat['response'] > 0)[0]
+    elif response_type == 'nogo':
+        indices = np.where(dat['response'] == 0)[0]
+    else:
+        raise Warning('wrong response_type input, choose: to_left, to_right or nogo')
+
+    return indices
+
+
 def select_trials(dat,  contrast_pair: tuple = (0, 1), response_type: str = 'to_left'):
     '''Find indices of trials with the specified response and contrast levels in the dataset provided from a single experiment.
 
