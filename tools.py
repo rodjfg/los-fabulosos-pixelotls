@@ -73,3 +73,15 @@ def select_by_areas(dat, selected_regions: List[str] = ['VISp']):
     Returns:
         indices (1D array): array of indices from neurons belonging to specified regions.'''
     return np.where(np.isin(dat['brain_area'], selected_regions))[0]
+
+
+def select_by_contrast(dat, contrast_pair: tuple = (1, 0)):
+    '''Find indices of trials with the specified contrasts in the dataset provided from a single experiment.
+
+    Args:
+        dat (dict): data dictionary from a single experiment. For example dat = alldat[11] in the example notebook.
+        contrast_pair (tuple): tuple with the contrast level of Left and Right stimulus. For example (1,0) represents stimulus on left with contrast 1 (max), and stimulus on right with contrast 0 (not shown).
+
+    Returns:
+        indices (1D array): array of indices from trials.'''
+    return np.where((dat['contrast_left'] == contrast_pair[0])*(dat['contrast_right'] == contrast_pair[1]))[0]
