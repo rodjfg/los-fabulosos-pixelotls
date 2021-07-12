@@ -135,3 +135,19 @@ def select_trials(dat,  contrast_pair: tuple = (0, 1), response_type: str = 'to_
     indices = list(set.intersection(set(contrast_indices), set(response_indices)))
 
     return indices
+
+
+def calculate_mean_firing_rate(spks, dt, mean_across: List[str] = ['population']):
+    '''Find mean firing rate from the spikes (dat["spks"]), across the chosen dimensions. Note: spks should contain spikes only of desired neurons, so find indices with the select_* functions, and apply the indices before giving the array of spikes to this function.
+
+    Args:
+        spks (3D array): array of spikes, from the "spks" field in the datasets. Dimensions should be (Neurons x Trials x Time)
+        mean_across (List[str]): list of str specifying type of mean to apply. It can be: A) "population", to only average across neurons, keeping trials and time, B) "trials" to average across trials, keeping neurons and time, C) "time" to average across time, keeping neurons and trials, or D) any combination of 2 from the previous.
+
+    Returns:
+        mean_firing_rates (ND array): array of N dimensions, where N=3-len(mean_across), containing mean firing rates according to parameters.'''
+
+    dimension_order = ['population', 'trials', 'time']
+    axis_to_mean = tuple([dimension_order.index(x) for x in mean_across])
+
+    return 1/dt * spks.mean(axis=axis_to_mean)
