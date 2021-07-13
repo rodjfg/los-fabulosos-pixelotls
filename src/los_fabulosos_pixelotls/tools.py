@@ -3,7 +3,7 @@ import requests
 import numpy as np
 from typing import List
 from scipy.ndimage import gaussian_filter1d
-
+from scipy.ndimage import gaussian_filter #are they different?
 
 def load_raw_data(dat_path='.'):
     '''get dataset in its raw form, just like in the notebook.
@@ -155,3 +155,26 @@ def calculate_mean_firing_rate(spks, dt, mean_across: List[str] = ['population']
         mean_firing_rate = gaussian_filter1d(mean_firing_rate, gauss_sigma)
 
     return mean_firing_rate
+
+
+
+def choose_time_window(x):
+  #input: x: vector time series
+  #output: idxLimits: timestamps for window of size "size" after the first peak is skipped
+  x = gaussian_filter(x, sigma=1) #if not preprocessed
+
+  #find index of the first peak, where our function will start looking for the end of the peak(which will be the left end of our window) 
+  peak = np.argmax(x)  
+  i=peak
+  while x[i+1]<x[i]:
+    i+=1
+  idx0 = i  
+  while x[i]>x[idx0]:
+    if i>len(x):
+      break
+    i+=1
+  idxf = i
+
+  idxLimits = [idx0,idxf]
+
+  return idxLimits
