@@ -1,4 +1,4 @@
-from tools import load_raw_data
+from los_fabulosos_pixelotls.tools import load_raw_data
 import numpy as np
 from matplotlib import rcParams
 from matplotlib import pyplot as plt
@@ -9,7 +9,8 @@ rcParams['axes.spines.right'] = False
 rcParams['figure.autolayout'] = True
 
 # get data
-alldat = load_raw_data()
+print("loading, please wait")
+alldat = load_raw_data('../dat')
 
 # name conventions
 regions = ["vis ctx", "thal", "hipp", "other ctx", "midbrain", "basal ganglia", "cortical subplate", "other"]
@@ -71,7 +72,6 @@ for dat in alldat:
     n_mistakes_left += np.sum(len(left_stim_wrong_trials))
     n_correct_left += np.sum(len(left_stim_correct_trials))
 
-    # NEED TO ADD CONDITION THAT OTHER VIS_* IS NONZERO
     mean_right_rate = 1/dt * dat['spks'][neurons_indices_in_area][:, right_stim_trials].mean(axis=(1, 2))
     mean_left_rate = 1/dt * dat['spks'][neurons_indices_in_area][:, left_stim_trials].mean(axis=(1, 2))
     preference_rate = mean_right_rate - mean_left_rate

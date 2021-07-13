@@ -2,9 +2,10 @@ import os
 import requests
 import numpy as np
 from typing import List
+from scipy.ndimage import gaussian_filter1d
 
 
-def load_raw_data():
+def load_raw_data(dat_path='.'):
     '''get dataset in its raw form, just like in the notebook.
 
     Returns:
@@ -38,7 +39,7 @@ def load_raw_data():
 
     fname = []
     for j in range(3):
-        fname.append('steinmetz_part%d.npz' % j)
+        fname.append(f'{dat_path}/steinmetz_part{j}.npz')
     url = ["https://osf.io/agvxh/download"]
     url.append("https://osf.io/uv3mw/download")
     url.append("https://osf.io/ehmw2/download")
@@ -58,7 +59,7 @@ def load_raw_data():
 
     alldat = np.array([])
     for j in range(len(fname)):
-        alldat = np.hstack((alldat, np.load('steinmetz_part%d.npz' % j, allow_pickle=True)['dat']))
+        alldat = np.hstack((alldat, np.load(f'{dat_path}/steinmetz_part{j}.npz', allow_pickle=True)['dat']))
 
     return alldat
 
@@ -137,7 +138,7 @@ def select_trials(dat,  contrast_pair: tuple = (0, 1), response_type: str = 'to_
     return indices
 
 
-def calculate_mean_firing_rate(spks, dt, mean_across: List[str] = ['population']):
+def calculate_mean_firing_rate(spks, dt, mean_across: List[str] = ['population'], gaussfilter: bool = False, gauss_sigma: int = 1):
     '''Find mean firing rate from the spikes (dat["spks"]), across the chosen dimensions. Note: spks should contain spikes only of desired neurons, so find indices with the select_* functions, and apply the indices before giving the array of spikes to this function.
 
     Args:
@@ -149,5 +150,8 @@ def calculate_mean_firing_rate(spks, dt, mean_across: List[str] = ['population']
 
     dimension_order = ['population', 'trials', 'time']
     axis_to_mean = tuple([dimension_order.index(x) for x in mean_across])
+    mean_firing_rate = 1/dt * spks.mean(axis=axis_to_mean)
+    if gaussfilter:
+        mean_firing_rate = gaussian_filter1d(mean_firing_rate, gauss_sigma)
 
-    return 1/dt * spks.mean(axis=axis_to_mean)
+    return mean_firing_rate
