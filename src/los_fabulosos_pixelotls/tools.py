@@ -155,3 +155,72 @@ def calculate_mean_firing_rate(spks, dt, mean_across: List[str] = ['population']
         mean_firing_rate = gaussian_filter1d(mean_firing_rate, gauss_sigma)
 
     return mean_firing_rate
+
+
+def find_response_type(contrast):
+    '''find which is the correct response_type of the mouse given the pair of contrast given. nogo for same level, to_right when contrast is higher on left, and to_left when contrast is higher on right.
+
+    Args:
+        contrast_pair (tuple): tuple with the contrast level of Left and Right stimulus. For example (1,0) represents stimulus on left with contrast 1 (max), and stimulus on right with contrast 0 (not shown).
+
+    Returns:
+        correct_response (str): string corresponding to the response_type that is correct for the given contrast.'''
+
+    if contrast[1] == contrast[0]:
+        correct_response = 'nogo'
+    elif contrast[0] > contrast[1]:
+        correct_response = 'to_right'
+    elif contrast[0] < contrast[1]:
+        correct_response = 'to_left'
+    return correct_response
+
+
+def collect_firing_rates(alldat, contrast_pair, selected_regions: List[str] = ["VISp"], gaussfilter=True, gauss_sigma=1):
+    '''
+    Args:
+        alldat (dict): data dictionary from full dataset. Output from load_raw_data().
+        contrast_pair (tuple): tuple with the contrast level of Left and Right stimulus. For example (1,0) represents stimulus on left with contrast 1 (max), and stimulus on right with contrast 0 (not shown).
+        selected_regions (list of str): list of region names to include. For example ['VISp']
+
+    Returns:
+        all_correct_fr (2D array, N_trials, N_timebins): population average for all correct trials, timebins and experiments, for the given contrast.
+        all_incorrect_fr (2D array, N_trials, N_timebins): population average for all incorrect trials, timebins and experiments, for the given contrast.
+    '''
+
+    all_response_types = ['nogo', 'to_left', 'to_right']
+    all_correct_fr, all_incorrect_fr = None, None
+
+    for dat in alldat:
+        # get important variables from specific experiment
+        dt = dat['bin_size']
+        correct_response = find_response_type(contrast_pair)
+
+        # find neurons indices from selected area
+        neurons_indices_in_area = select_by_areas(dat, selected_regions=selected_regions)
+
+        # only continue if experiment has neurons in the region of interest
+        if len(neurons_indices_in_area) > 0:
+            # selected trials per contrast level and response
+            correct_trials = select_trials(dat, contrast_pair=contrast_pair, response_type=correct_response)
+            incorrect_trials = []
+            for response_type in all_response_types:
+                if response_type != correct_response:
+                    incorrect_trials.extend(select_trials(dat, contrast_pair=contrast_pair, response_type=response_type))
+
+            # store firing rates of correct trials
+            if len(correct_trials) > 0:
+                correct_spks = dat['spks'][neurons_indices_in_area][:, correct_trials]
+                correct_fr = calculate_mean_firing_rate(correct_spks, dt, ['population'], gaussfilter=gaussfilter, gauss_sigma=gauss_sigma)
+                if all_correct_fr is None:
+                    all_correct_fr = correct_fr
+                else:
+                    all_correct_fr = np.concatenate((all_correct_fr, correct_fr), axis=0)
+            # store firing rates of incorrect trials
+            if len(incorrect_trials) > 0:
+                incorrect_spks = dat['spks'][neurons_indices_in_area][:, incorrect_trials]
+                incorrect_fr = calculate_mean_firing_rate(incorrect_spks, dt, ['population'], gaussfilter=gaussfilter, gauss_sigma=gauss_sigma)
+                if all_incorrect_fr is None:
+                    all_incorrect_fr = incorrect_fr
+                else:
+                    all_incorrect_fr = np.concatenate((all_incorrect_fr, incorrect_fr), axis=0)
+    return all_correct_fr, all_incorrect_fr
