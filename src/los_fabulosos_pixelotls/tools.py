@@ -3,7 +3,7 @@ import requests
 import numpy as np
 from typing import List
 from scipy.ndimage import gaussian_filter1d
-
+from scipy.ndimage import gaussian_filter #are they different?
 
 def load_raw_data(dat_path='.'):
     '''get dataset in its raw form, just like in the notebook.
@@ -157,6 +157,7 @@ def calculate_mean_firing_rate(spks, dt, mean_across: List[str] = ['population']
     return mean_firing_rate
 
 
+<<<<<<< HEAD
 def find_response_type(contrast):
     '''find which is the correct response_type of the mouse given the pair of contrast given. nogo for same level, to_right when contrast is higher on left, and to_left when contrast is higher on right.
 
@@ -224,3 +225,26 @@ def collect_firing_rates(alldat, contrast_pair, selected_regions: List[str] = ["
                 else:
                     all_incorrect_fr = np.concatenate((all_incorrect_fr, incorrect_fr), axis=0)
     return all_correct_fr, all_incorrect_fr
+=======
+
+def choose_time_window(x):
+  #input: x: vector time series
+  #output: idxLimits: timestamps for window of size "size" after the first peak is skipped
+  x = gaussian_filter(x, sigma=1) #if not preprocessed
+
+  #find index of the first peak, where our function will start looking for the end of the peak(which will be the left end of our window) 
+  peak = np.argmax(x)  
+  i=peak
+  while x[i+1]<x[i]:
+    i+=1
+  idx0 = i  
+  while x[i]>x[idx0]:
+    if i>len(x):
+      break
+    i+=1
+  idxf = i
+
+  idxLimits = [idx0,idxf]
+
+  return idxLimits
+>>>>>>> 6f4db3b96929a60013e07b5968da75ec0eb28d10
