@@ -4,6 +4,7 @@ import numpy as np
 from typing import List
 from scipy.ndimage import gaussian_filter1d
 from scipy.ndimage import gaussian_filter  # are they different?
+import matplotlib.pyplot as plt
 
 
 def load_raw_data(dat_path='.'):
@@ -247,3 +248,62 @@ def choose_time_window(x):
     idxLimits = [idx0, idxf]
 
     return idxLimits
+
+
+def select_by_outcome(dat, feedback_type: str = 'correct'):
+    '''Find indices of trials with the specified outcome (correct, incorrect) in the dataset provided from a single experiment. 
+       Correct = Rewarded, Incorrect = punished. Note that succesful no-go trials indices are also included.
+    Args:
+        dat (dict): data dictionary from a single experiment. For example dat = alldat[11] in the example notebook.
+        response_type (str): str specifying outcome. "correct", "incorrect"
+    Returns:
+        indices (1D array): array of indices from trials.'''
+
+    if feedback_type == 'correct':
+        indices = np.where(dat['feedback_type'] > 0)[0]
+    elif feedback_type == 'incorrect':
+        indices = np.where(dat['feedback_type'] < 0)[0]
+
+    else:
+        raise Warning('wrong response_type input, choose: correct or incorrect')
+
+    return indices
+
+
+def clasificator_analisis(model, X, y, axes=None, verbose=False):
+    '''Compute accuracy with CV, confusion matrix, precision-recall scores and plot ROC and precision-recall curves.
+    Args: 
+        model = model object trained from sklearn
+            X = input features in train or test
+            y = target in train or test
+    Return:
+    Print of all the scores computed and save accuracy, cm, precision, recall
+    '''
+
+    from sklearn.model_selection import cross_val_predict, cross_val_score
+    from sklearn.metrics import confusion_matrix, precision_score, recall_score, plot_precision_recall_curve, plot_roc_curve, plot_confusion_matrix
+
+    if axes is None:
+        fig, axes = plt.subplots(3, 1)
+
+    accu = cross_val_score(model, X, y, cv=3, scoring="accuracy").mean()
+    pred = cross_val_predict(model, X, y, cv=3)
+    cm = confusion_matrix(y, pred)
+    precision = precision_score(y, pred)
+    recall = recall_score(y, pred)
+    plot_precision_recall_curve(model, X, y, ax=axes[0])
+
+    if verbose:
+        print(f'Accuracy:{accu}\n')
+        print(f'Confusion Matrix:\n{cm}\n')
+        print(f'Precision: {precision}\n')
+        print(f'Recall: {recall}')
+
+    plot_roc_curve(model, X, y, ax=axes[1])
+    axes[1].plot([0, 1], [0, 1], color='0.5', ls=':')
+
+    plot_confusion_matrix(model, X, y, display_labels=['to Right', 'to Left'], ax=axes[2])
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+
+    return accu, cm, precision, recall
